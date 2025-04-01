@@ -151,7 +151,7 @@ GET    /api/v1/orgs/:id/report          # Org-level team report
 ## Getting started
 
 ```bash
-git clone https://github.com/joel767443/devpulse.git
+git clone https://github.com/ykachala/devpulse.git
 cd devpulse
 cp .env.example .env
 # Set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, ANTHROPIC_API_KEY
@@ -239,8 +239,8 @@ devpulse/
 
 ## Related
 
-- [nexus-scheduler](https://github.com/joel767443/nexus-scheduler) — AI scheduling, similar Claude integration pattern  
-- [finparse-ai](https://github.com/joel767443/finparse-ai) — same structured AI extraction approach applied to financial documents
+- [nexus-scheduler](https://github.com/ykachala/nexus-scheduler) — AI scheduling, similar Claude integration pattern  
+- [finparse-ai](https://github.com/ykachala/finparse-ai) — same structured AI extraction approach applied to financial documents
 
 ---
 
