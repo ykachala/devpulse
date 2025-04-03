@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SyncStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+model User {
+  id             String      @id @default(uuid())
+  githubId       Int         @unique
+  login          String      @unique
+  email          String?
+  name           String?
+  avatarUrl      String?
+  lastSyncedAt   DateTime?
+  oauthToken     OAuthToken?
+  repos          Repo[]
+  syncJobs       SyncJob[]
+  analysis       Analysis?
+  profile        Profile?
+  orgMemberships OrgMember[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@map("users")
+}
+
+model OAuthToken {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  encryptedToken String
+  tokenIv        String
+  tokenTag       String
+  scopes         String[]
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("oauth_tokens")
+}
+
+model Repo {
+  id              String    @id @default(uuid())
+  githubId        Int       @unique
+  userId          String
+  name            String
+  fullName        String
+  description     String?
+  primaryLanguage String?
+  languages       Json      @default("{}")
+  topics          String[]
+  starCount       Int       @default(0)
+  forkCount       Int       @default(0)
+  isPrivate       Boolean   @default(false)
+  hasCiCd         Boolean   @default(false)
+  hasDocker       Boolean   @default(false)
+  hasTests        Boolean   @default(false)
+  dependencyFiles Json      @default("{}")
+  commitCount     Int       @default(0)
+  lastCommitAt    DateTime?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commits         Commit[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("repos")
+}
+
+model Commit {
+  id          String   @id @default(uuid())
+  sha         String   @unique
+  repoId      String
+  userId      String
+  message     String
+  authoredAt  DateTime
+  repo        Repo     @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@map("commits")
+}
+
+model SyncJob {
+  id          String     @id @default(uuid())
+  userId      String
+  status      SyncStatus @default(pending)
+  progress    Int        @default(0)
+  total       Int        @default(0)
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("sync_jobs")
+}
+
+model Analysis {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  techStacks       Json     @default("[]")
+  architectureTags String[]
+  seniorityScore   Float    @default(0)
+  consistencyScore Float    @default(0)
+  commitQuality    Float    @default(0)
+  testCoverage     Float    @default(0)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("analyses")
+}
+
+model Profile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  bio            String?
+  techSummary    String?
+  strengthAreas  Json     @default("[]")
+  readmeMarkdown String?
+  s3ReadmeKey    String?
+  s3ProfileKey   String?
+  generatedAt    DateTime?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Org {
+  id         String      @id @default(uuid())
+  name       String
+  apiKeyHash String      @unique
+  members    OrgMember[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("orgs")
+}
+
+model OrgMember {
+  id        String   @id @default(uuid())
+  orgId     String
+  userId    String
+  role      String   @default("member")
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([orgId, userId])
+  @@map("org_members")
+}
