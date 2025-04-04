@@ -210,7 +210,7 @@ event-driven pipelines appear repeatedly across multiple repositories.
 - Testing: test directories in 7 repos, coverage scripts in 4
 
 ## Suggested profile headline
-Senior Backend Engineer & Platform Architect | TypeScript · Node.js · Laravel · AWS
+Senior Backend Engineer & API Platform Architect | TypeScript · Node.js · Laravel · AWS
 ```
 
 ---
