@@ -6,7 +6,8 @@ import { loadConfig } from '@/config';
 import { logger } from '@/logger';
 import { createApp } from '@/api/server';
 import { getRedis } from '@/redis/client';
-import { getIngestionQueue, closeIngestionQueue } from '@/ingestion/queue';
+import { getIngestionQueue, closeIngestionQueue, createIngestionWorker } from '@/ingestion/queue';
+import { Worker } from 'bullmq';
 import { db } from '@/db/client';
 
 async function main(): Promise<void> {
@@ -21,6 +22,10 @@ async function main(): Promise<void> {
   getIngestionQueue(config.redisUrl);
   logger.info('Ingestion queue initialised');
 
+  // Start the worker
+  const worker: Worker = createIngestionWorker();
+  logger.info('Ingestion worker started');
+
   const app = createApp();
   const server = app.listen(config.port, () => {
     logger.info({ port: config.port }, 'HTTP server listening');
@@ -30,6 +35,7 @@ async function main(): Promise<void> {
     logger.info({ signal }, 'Received shutdown signal, draining...');
     server.close(async () => {
       try {
+        await worker.close();
         await closeIngestionQueue();
         await redis.quit();
         await db.$disconnect();
