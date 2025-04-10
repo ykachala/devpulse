@@ -13,6 +13,7 @@ import { loadConfig } from '@/config';
 import { logger } from '@/logger';
 import { updateLastSynced } from '@/db/userRepository';
 import { runAnalysis } from '@/analysis/engine';
+import { deriveSyncWindow } from '@/ingestion/incrementalSync';
 
 export interface CommitHistoryJobData {
   userId: string;
@@ -51,8 +52,9 @@ export async function processCommitHistory(job: Job<CommitHistoryJobData>): Prom
 
   const client = new GitHubClient(accessToken);
 
-  // Incremental sync: only fetch commits since last sync
-  const since = user.lastSyncedAt?.toISOString();
+  // Derive the sync window — undefined on first sync (full fetch), ISO string on subsequent runs
+  const { since, isFullSync } = deriveSyncWindow(user.lastSyncedAt);
+  logger.info({ userId, jobId, isFullSync, since }, 'Derived incremental sync window');
 
   // Load all repos for this user
   const repos = await db.repo.findMany({ where: { userId } });
